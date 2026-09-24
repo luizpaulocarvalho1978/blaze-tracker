@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blaze Tracker V34+ - Motor de Referências</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+--bg: #050b14; --bg2: #08111d; --panel: #0b1624; --panel2: #0d1a2b;
+--border: #182a3d; --text: #e9f1f8; --muted: #728399;
+--green: #31e6a1; --green2: #16c98b; --red: #ef4050;
+--white: #e9eef2; --blue: #19a7ff; --gold: #fbbf24; --yellow: #facc15;
+--purple: #a855f7;
+}
+body {
+font-family: Arial, Helvetica, sans-serif;
+background: radial-gradient(circle at 50% -20%, #10243a 0%, transparent 45%), var(--bg);
+color: var(--text); min-height: 100vh;
+}
+header {
+height: 62px; border-bottom: 1px solid var(--border);
+background: rgba(5, 11, 20, .94); display: flex; align-items: center;
+justify-content: space-between; padding: 0 24px;
+position: sticky; top: 0; z-index: 20; backdrop-filter: blur(15px);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+width: 30px; height: 30px; border-radius: 9px;
+background: rgba(49, 230, 161, .12); border: 1px solid rgba(49, 230, 161, .25);
+display: flex; align-items: center; justify-content: center;
+color: var(--green); font-size: 15px;
+}
+.brand-title { font-size: 13px; font-weight: bold; letter-spacing: 2px; }
+.brand-subtitle { font-size: 8px; color: #607186; letter-spacing: 1.4px; margin-top: 3px; }
+.connection { display: flex; align-items: center; gap: 8px; font-size: 9px; color: #8c9bad; letter-spacing: 1px; }
+.online-dot {
+width: 6px; height: 6px; background: var(--green); border-radius: 50%;
+box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.container { width: min(1450px, calc(100% - 36px)); margin: 0 auto; padding: 25px 0 40px; }
+.hero { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+.eyebrow { color: var(--green); font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 8px; }
+h1 { font-size: clamp(22px, 3vw, 34px); letter-spacing: -.8px; margin-bottom: 6px; }
+.description { color: var(--muted); font-size: 11px; }
+.refresh {
+border: 1px solid var(--border); background: var(--panel); color: #8494a7;
+border-radius: 10px; padding: 9px 13px; font-size: 10px; cursor: pointer;
+}
+.refresh:hover { border-color: var(--green); color: var(--green); }
+.config-panel {
+background: linear-gradient(145deg, rgba(14, 27, 43, .95), rgba(7, 16, 27, .95));
+border: 1px solid var(--border); border-radius: 14px; padding: 17px; margin-bottom: 17px;
+}
+.config-grid { display: grid; grid-template-columns: 1.1fr 1.1fr 1fr 1fr 1.25fr; gap: 10px; }
+.field label { display: block; font-size: 8px; text-transform: uppercase; color: #63758a; letter-spacing: 1.1px; margin-bottom: 7px; }
+.field-box {
+height: 38px; background: #081321; border: 1px solid #17293c; border-radius: 8px;
+display: flex; align-items: center; padding: 0 11px; color: #b6c4d0; font-size: 10px;
+cursor: pointer; transition: all 0.3s;
+}
+.field-box:hover { border-color: var(--green); }
+.field-box.active { color: var(--green); border-color: var(--green); background: rgba(49, 230, 161, 0.05); }
+.field-box select { background: transparent; border: none; color: inherit; font-size: inherit; width: 100%; cursor: pointer; outline: none; }
+.config-actions { margin-top: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.status-text { color: #617387; font-size: 9px; }
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+button { border: 0; cursor: pointer; }
+.btn-secondary { background: #0d1a29; color: #8a9aac; border: 1px solid #1a2c40; padding: 9px 14px; border-radius: 8px; font-size: 9px; }
+.btn-secondary:hover { border-color: var(--red); color: var(--red); }
+.btn-primary { background: var(--green); color: #04130e; font-weight: bold; padding: 9px 15px; border-radius: 8px; font-size: 9px; box-shadow: 0 0 18px rgba(49, 230, 161, .13); }
+.btn-primary:hover { box-shadow: 0 0 25px rgba(49, 230, 161, .25); }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
+.section-title { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: #91a2b5; }
+.section-title span { color: var(--green); }
+.live-label { font-size: 8px; color: var(--green); }
+.panel { background: linear-gradient(145deg, #0b1725, #08111d); border: 1px solid var(--border); border-radius: 13px; padding: 16px; }
+.results { margin-bottom: 17px; }
+.result-list { display: flex; gap: 9px; overflow-x: auto; padding: 3px 0 5px; }
+.result {
+flex: 0 0 62px; height: 66px; border-radius: 10px; background: #0a1523;
+border: 1px solid #17283b; display: flex; flex-direction: column;
+align-items: center; justify-content: center; gap: 5px;
+cursor: pointer; transition: all 0.3s; position: relative;
+}
+.result:hover { transform: translateY(-2px); border-color: var(--green); }
+.result.selected { border-color: var(--gold); box-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
+.result.selected::after {
+content: '✓'; position: absolute; top: -8px; right: -8px;
+background: var(--gold); color: #04130e; width: 20px; height: 20px;
+border-radius: 50%; font-size: 12px; font-weight: bold;
+display: flex; align-items: center; justify-content: center;
+}
+.result .ref-number {
+position: absolute; top: -8px; left: -8px;
+background: var(--blue); color: white; width: 20px; height: 20px;
+border-radius: 50%; font-size: 10px; font-weight: bold;
+display: flex; align-items: center; justify-content: center;
+}
+.ball {
+width: 34px; height: 34px; border-radius: 5px;
+position: relative; display: flex; align-items: center; justify-content: center;
+font-size: 11px; font-weight: 800; line-height: 1; color: #fff;
+font-variant-numeric: tabular-nums;
+box-sizing: border-box; overflow: hidden;
+text-shadow: 0 1px 2px rgba(0,0,0,.50);
+box-shadow: 0 2px 7px rgba(0,0,0,.24);
+}
+/* Formato inspirado diretamente no histórico do Blaze Double:
+   bloco quadrado colorido + círculo interno nítido. */
+.ball::before {
+content: ''; position: absolute; inset: 5px; border-radius: 50%;
+pointer-events: none;
+box-shadow: 0 0 0 1.5px rgba(255,255,255,.92), inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.ball::after {
+content: ''; position: absolute; left: 7%; top: 5%; width: 86%; height: 24%;
+border-radius: 4px; background: rgba(255,255,255,.055);
+pointer-events: none;
+}
+.ball.red {
+background: linear-gradient(145deg, #ff3b58 0%, #f12f4d 55%, #df2340 100%);
+box-shadow: 0 2px 8px rgba(239,64,80,.20);
+}
+.ball.black {
+background: linear-gradient(145deg, #27323e 0%, #1b2530 55%, #121a23 100%);
+border: 1px solid #334252;
+box-shadow: 0 2px 8px rgba(0,0,0,.32);
+}
+.ball.white {
+background: linear-gradient(145deg, #ffffff 0%, #f5f7f8 58%, #e3e7ea 100%);
+color: #18202a; text-shadow: none;
+border: 1px solid #b8c0c7;
+box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.ball.white::before { box-shadow: 0 0 0 1.5px rgba(62,72,82,.78), inset 0 0 0 1px rgba(0,0,0,.04); }
+.ball.white::after { background: rgba(255,255,255,.55); }
+.result-time { font-size: 7px; color: #56687b; }
+.two-columns { display: grid; grid-template-columns: 1.35fr .85fr; gap: 17px; margin-bottom: 17px; }
+.frequency-map { display: grid; grid-template-columns: repeat(10, 1fr); gap: 7px; margin-top: 10px; }
+.freq {
+min-height: 59px; border: 1px solid #193047; border-radius: 8px; background: #091523;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+position: relative; overflow: hidden;
+}
+.freq::after {
+content: ""; position: absolute; bottom: 0; left: 0; right: 0;
+height: var(--level); background: rgba(49, 230, 161, .09); pointer-events: none;
+}
+.freq-number { color: #94a5b7; font-size: 9px; z-index: 1; }
+.freq-count { color: var(--green); font-size: 12px; font-weight: bold; margin-top: 3px; z-index: 1; }
+.freq.hot { border-color: rgba(49, 230, 161, .45); box-shadow: inset 0 0 15px rgba(49, 230, 161, .04); }
+.legend { margin-top: 11px; font-size: 8px; color: #5f7184; }
+.refs-container { margin-top: 13px; display: flex; flex-direction: column; gap: 8px; }
+.ref-card {
+background: #060f1a; border: 1px solid #1a2c40; border-radius: 10px; padding: 10px;
+font-size: 9px;
+}
+.ref-card-header {
+display: flex; justify-content: space-between; align-items: center;
+margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #1a2c40;
+}
+.ref-title { color: var(--gold); font-weight: bold; font-size: 10px; display: flex; align-items: center; gap: 6px; }
+.ref-origin {
+font-size: 7px; padding: 2px 6px; border-radius: 4px; font-weight: bold;
+}
+.ref-origin.auto { background: var(--blue); color: white; }
+.ref-origin.manual { background: var(--purple); color: white; }
+.ref-remove {
+background: transparent; border: 1px solid var(--red); color: var(--red);
+padding: 2px 6px; border-radius: 4px; font-size: 8px; cursor: pointer;
+}
+.ref-remove:hover { background: var(--red); color: white; }
+.ref-info { color: #a9b9c8; margin-bottom: 4px; }
+.ref-info strong { color: var(--green); }
+.vias-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.via-box {
+background: #0a1523; border: 1px solid #1a2c40; border-radius: 6px;
+padding: 6px; text-align: center; font-size: 8px;
+}
+.via-box.ativa { border-color: var(--green); }
+.via-box.pago-exato { border-color: var(--green); background: rgba(49, 230, 161, 0.1); }
+.via-box.pago-margem { border-color: var(--yellow); background: rgba(250, 204, 21, 0.1); }
+.via-tipo { color: var(--muted); font-size: 7px; text-transform: uppercase; }
+.via-alvo { color: var(--text); font-weight: bold; font-size: 11px; margin: 2px 0; }
+.via-status { font-size: 7px; }
+.via-status.pendente { color: var(--blue); }
+.via-status.exato { color: var(--green); font-weight: bold; }
+.via-status.margem { color: var(--yellow); font-weight: bold; }
+.ranking-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.ranking-item {
+background: #060f1a; border: 1px solid #1a2c40; border-radius: 8px;
+padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
+}
+.ranking-item.top { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); }
+.ranking-minuto { font-weight: bold; font-size: 14px; color: var(--text); }
+ .ranking-conf { color: var(--green); font-size: 11px; font-weight: bold; }
+.paid-results { margin-top: 8px; }
+.paid-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 9px; border:1px solid var(--border); border-radius:7px; background:rgba(255,255,255,.02); margin-bottom:5px; font-size:11px; }
+.paid-row.exato { border-color:rgba(49,230,161,.45); }
+.paid-row.margem { border-color:rgba(250,204,21,.45); }
+.paid-badge { font-weight:800; white-space:nowrap; }
+.paid-badge.exato { color:var(--green); }
+.paid-badge.margem { color:var(--yellow); }
+.paid-meta { color:var(--muted); }
+.signal-logs {
+margin-top: 10px; background: #060f1a; border: 1px solid #1a2c40; border-radius: 8px;
+padding: 10px; font-size: 8px; color: #5f7184; font-family: 'Courier New', monospace;
+max-height: 300px; overflow-y: auto; display: none; white-space: pre-wrap;
+}
+.signal-logs.show { display: block; }
+.toggle-logs { background: transparent; border: 1px solid #1a2c40; color: #5f7184; padding: 5px 10px; border-radius: 6px; font-size: 8px; margin-top: 10px; cursor: pointer; }
+.toggle-logs:hover { border-color: var(--green); color: var(--green); }
+.copy-logs { background: transparent; border: 1px solid #1a2c40; color: #5f7184; padding: 5px 10px; border-radius: 6px; font-size: 8px; margin-top: 10px; margin-left: 6px; cursor: pointer; }
+.copy-logs:hover { border-color: var(--green); color: var(--green); }
+.history { padding-bottom: 19px; }
+.history-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.history-date { border: 1px solid #172a3c; background: #081320; color: #77899b; border-radius: 7px; padding: 7px 10px; font-size: 8px; }
+.history-count { color: var(--green); font-size: 8px; }
+.history-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 7px; }
+.history-item {
+height: 54px; background: #091522; border: 1px solid #162a3d; border-radius: 8px;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+gap: 4px; cursor: pointer; transition: all 0.3s; position: relative;
+}
+.history-item:hover { transform: scale(1.05); border-color: var(--green); }
+.history-item.selected { border-color: var(--gold); box-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
+.history-item.selected::after {
+content: '✓'; position: absolute; top: -8px; right: -8px;
+background: var(--gold); color: #04130e; width: 20px; height: 20px;
+border-radius: 50%; font-size: 12px; font-weight: bold;
+display: flex; align-items: center; justify-content: center;
+}
+.history-item .ref-number {
+position: absolute; top: -8px; left: -8px;
+background: var(--blue); color: white; width: 20px; height: 20px;
+border-radius: 50%; font-size: 10px; font-weight: bold;
+display: flex; align-items: center; justify-content: center;
+}
+.history-item .ball { width: 24px; height: 24px; font-size: 8px; }
+.history-time { color: #4f6276; font-size: 6px; }
+footer { text-align: center; padding: 15px; color: #435467; font-size: 7px; letter-spacing: 1px; }
+.empty-state {
+text-align: center; padding: 30px 20px; color: var(--muted);
+}
+.empty-state .icon { font-size: 32px; margin-bottom: 10px; }
+.empty-state .title { font-size: 12px; color: var(--text); margin-bottom: 5px; }
+.empty-state .desc { font-size: 9px; }
+.mode-indicator {
+display: inline-block; padding: 3px 8px; border-radius: 4px;
+font-size: 8px; font-weight: bold; margin-left: 6px;
+}
+.mode-indicator.auto { background: var(--blue); color: white; }
+.mode-indicator.manual { background: var(--purple); color: white; }
+.limit-warning {
+background: rgba(239, 64, 80, 0.1); border: 1px solid var(--red);
+color: var(--red); padding: 6px 10px; border-radius: 6px;
+font-size: 9px; margin-top: 8px; display: none;
+}
+.limit-warning.show { display: block; }
+@media (max-width: 1000px) {
+.config-grid { grid-template-columns: repeat(3, 1fr); }
+.two-columns { grid-template-columns: 1fr; }
+.history-grid { grid-template-columns: repeat(10, 1fr); }
+.frequency-map { grid-template-columns: repeat(8, 1fr); }
+}
+@media (max-width: 650px) {
+header { padding: 0 13px; }
+.container { width: calc(100% - 20px); padding-top: 17px; }
+.connection { display: none; }
+.hero { align-items: flex-start; gap: 10px; }
+.refresh { display: none; }
+.config-grid { grid-template-columns: 1fr 1fr; }
+.config-actions { align-items: flex-start; gap: 10px; flex-direction: column; }
+.buttons { width: 100%; }
+.buttons button { flex: 1; }
+.frequency-map { grid-template-columns: repeat(5, 1fr); }
+.history-grid { grid-template-columns: repeat(5, 1fr); }
+.history-item { height: 48px; }
+.vias-row { grid-template-columns: 1fr; }
+}
+.simulator-panel{margin-top:16px}.sim-config-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sim-config-grid input,.sim-config-grid select{width:100%;background:transparent;border:0;color:inherit;outline:none;font:inherit}.sim-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.sim-actions button{cursor:pointer}.sim-stats{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin-top:14px}.sim-stats>div{border:1px solid var(--border);border-radius:10px;padding:10px;background:rgba(255,255,255,.02)}.sim-stats span{display:block;font-size:8px;color:var(--muted);letter-spacing:.08em}.sim-stats strong{display:block;margin-top:4px;font-size:14px}.sim-current{margin-top:14px}.sim-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:10px;align-items:center}.sim-card .label{font-size:8px;color:var(--muted);text-transform:uppercase}.sim-card .value{font-size:14px;font-weight:700;margin-top:3px}.sim-history{margin-top:10px;display:flex;flex-direction:column;gap:6px}.sim-row{display:grid;grid-template-columns:70px 90px 100px 1fr 100px 100px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:9px;font-size:11px}.sim-row .muted{color:var(--muted);font-size:9px}.sim-win{color:#31e6a1}.sim-loss{color:#ff6b6b}.sim-pending{color:#f4c95d}@media(max-width:900px){.sim-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.sim-card{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-row{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:560px){.sim-config-grid{grid-template-columns:1fr}.sim-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<div class="brand">
+<div class="brand-icon"></div>
+<div>
+<div class="brand-title">BLAZE TRACKER</div>
+<div class="brand-subtitle">V34+ • MOTOR DE REFERÊNCIAS</div>
+</div>
+</div>
+<div class="connection">
+<span class="online-dot"></span>
+AO VIVO / REST PROXY • <span id="rollCount">0</span> REGISTROS
+</div>
+</header>
+<main class="container">
+<section class="hero">
+<div>
+<div class="eyebrow">⚡ CENTRAL DE ANÁLISE REATIVA</div>
+<h1>Leitura de mesa <span style="color:#31e6a1;">lapidada.</span></h1>
+<div class="description">Convergência de referências, arrasto contínuo e auditoria local em tempo real.</div>
+</div>
+<button class="refresh" onclick="fetchRolls()">↻ ATUALIZAR</button>
+</section>
+<section class="config-panel">
+<div class="config-grid">
+<div class="field">
+<label>Modo de Leitura</label>
+<div style="display: flex; gap: 4px;">
+<div class="field-box active" id="modeAuto" onclick="setMode('auto')" style="flex: 1; justify-content: center;">AUTO</div>
+<div class="field-box" id="modeManual" onclick="setMode('manual')" style="flex: 1; justify-content: center;"> MANUAL</div>
+</div>
+</div>
+<div class="field">
+<label>Brancos na Análise (N)</label>
+<div class="field-box">
+<select id="refsSelect" onchange="handleRefsChange()">
+<option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+<option value="4">4</option><option value="5">5</option><option value="6">6</option>
+<option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+</select>
+</div>
+</div>
+<div class="field">
+<label>Giros Carregados</label>
+<div class="field-box">
+<select id="spinsSelect" onchange="fetchRolls()">
+<option value="100">100 giros</option><option value="360" selected>360 giros</option>
+<option value="500">500 giros</option><option value="1000">1000 giros</option>
+</select>
+</div>
+</div>
+<div class="field">
+<label>Referências Ativas</label>
+<div class="field-box active" id="refsCounter">0 selecionadas</div>
+</div>
+<div class="field">
+<label>Fonte de Dados</label>
+<div class="field-box active">AO VIVO / REST PROXY</div>
+</div>
+</div>
+<div class="limit-warning" id="limitWarning">⚠️ LIMITE DE <span id="limitN">3</span> REFERÊNCIAS ATINGIDO</div>
+<div class="config-actions">
+<div class="status-text"><span id="statusText"> AGUARDANDO REFERÊNCIA — Selecione um modo e um branco</span></div>
+<div class="buttons">
+<button class="btn-secondary" onclick="clearSelection()">❌ Zerar Análise</button>
+<button class="btn-secondary" onclick="clearData()">🗑 Zerar Tudo</button>
+<button class="btn-primary" onclick="simulateRoll()"> Simular Giro</button>
+</div>
+</div>
+</section>
+<div class="section-header">
+<div class="section-title"> <span>STREAM</span> DE RESULTADOS</div>
+<div class="live-label">● Atualização reativa</div>
+</div>
+<section class="panel results"><div id="resultList" class="result-list"></div></section>
+<div class="two-columns">
+<section class="panel">
+<div class="section-header">
+<div class="section-title">◉ DISTRIBUIÇÃO / <span>HEATMAP</span></div>
+<div class="live-label">60 MINUTOS</div>
+</div>
+<div id="frequencyMap" class="frequency-map"></div>
+<div class="legend">▪ frequência de brancos por minuto (picos ≥3 = +1 confirmação cruzada)</div>
+</section>
+<section class="panel">
+<div class="section-header">
+<div class="section-title">◉ REFERÊNCIAS <span>ATIVAS</span></div>
+<div id="modeBadge"></div>
+</div>
+<div id="refsContainer" class="refs-container">
+<div class="empty-state">
+<div class="icon"></div>
+<div class="title">AGUARDANDO REFERÊNCIA</div>
+<div class="desc">Selecione um modo e um branco para iniciar o motor</div>
+</div>
+</div>
+<div class="section-header" style="margin-top: 17px;">
+<div class="section-title">◉ <span>RANKING</span> DE CONVERGÊNCIA</div>
+<div></div>
+</div>
+<div id="rankingContainer">
+<div class="empty-state"><div class="desc">Nenhuma referência ativa para cruzar</div></div>
+</div>
+<button class="toggle-logs" onclick="toggleLogs()"> Mostrar Logs de Cálculo</button><button class="copy-logs" id="copyLogsBtn" onclick="copiarLogs()">📋 COPIAR LOG</button>
+<div class="signal-logs" id="signalLogs"></div>
+<div class="section-header" style="margin-top:12px;">
+<div class="section-title">◉ <span>RESULTADOS PAGOS</span></div>
+<button class="toggle-logs" id="togglePaidResultsBtn" onclick="togglePaidResults()">👁 MOSTRAR PAGOS</button>
+</div>
+<div id="paidResults" class="signal-logs"></div>
+</section>
+</div>
+<section class="panel simulator-panel">
+<div class="section-header"><div class="section-title">◉ <span>SIMULADOR DE BANCA</span></div><div class="history-count" id="simStatusBadge">⏸ PARADO</div></div>
+<div class="sim-config-grid">
+<div class="field"><label>Modo do Simulador</label><div style="display:flex;gap:4px"><div class="field-box active" id="simModeAuto" onclick="setSimMode('auto')" style="flex:1;justify-content:center">AUTO</div><div class="field-box" id="simModeManual" onclick="setSimMode('manual')" style="flex:1;justify-content:center">MANUAL</div></div></div>
+<div class="field"><label>Banca Inicial</label><div class="field-box"><input id="simBank" type="number" min="0" step="0.01" value="200"></div></div>
+<div class="field"><label>Risco por Entrada (%)</label><div class="field-box"><input id="simRisk" type="number" min="0" step="0.01" value="2"></div></div>
+<div class="field"><label>Fator de Progressão</label><div class="field-box"><input id="simFactor" type="number" min="1" step="0.01" value="1"></div></div>
+<div class="field"><label>Máx. Tentativas</label><div class="field-box"><input id="simMaxAttempts" type="number" min="1" step="1" value="53"></div></div>
+<div class="field"><label>Regra de Banca</label><div class="field-box"><select id="simBaseRule"><option value="initial">% da banca inicial</option><option value="current">% da banca atual</option></select></div></div><div class="field"><label>Cobertura da Entrada</label><div class="field-box"><select id="simCoverage"><option value="margin">COM MARGEM — 6 entradas</option><option value="exact">SEM MARGEM — 2 entradas</option></select></div></div></div>
+<div class="sim-actions"><button class="refresh" onclick="iniciarSimulador()">▶ INICIAR</button><button class="toggle-logs" onclick="pausarSimulador()">⏸ PAUSAR</button><button class="toggle-logs" onclick="zerarSimulador()">🧹 ZERAR SIMULAÇÃO</button><button class="copy-logs" onclick="copiarEntradasSimulador(this)">📋 COPIAR ENTRADAS</button></div>
+<div class="sim-stats"><div><span>BANCA ATUAL</span><strong id="simBankNow">R$ 200,00</strong></div><div><span>ENTRADAS</span><strong id="simEntries">0</strong></div><div><span>ACERTOS</span><strong id="simWins">0</strong></div><div><span>PERDAS</span><strong id="simLosses">0</strong></div><div><span>EXATOS</span><strong id="simExact">0</strong></div><div><span>MARGENS</span><strong id="simMargin">0</strong></div><div><span>SEQUÊNCIA ATUAL</span><strong id="simSeq">0</strong></div><div><span>RESULTADO</span><strong id="simProfit">R$ 0,00</strong></div></div>
+<div id="simCurrent" class="sim-current"><div class="empty-state"><div class="desc">Inicie a simulação para acompanhar as entradas geradas pelo aplicativo.</div></div></div><div id="simHistory" class="sim-history"></div>
+</section>
+<section class="panel history">
+<div class="section-header">
+<div class="section-title">◉ <span>HISTÓRICO PERSISTIDO</span></div>
+<div class="history-count">✓ <span id="historyCount">0</span> REGISTROS</div>
+</div>
+<div class="history-tools">
+<div class="history-date" id="lastUpdate">◷ Aguardando dados...</div>
+<div class="history-count" id="historyHint">Clique em brancos para criar referências raiz</div>
+</div>
+<div id="historyGrid" class="history-grid"></div>
+</section>
+<footer>BLAZE TRACKER V34+ • MOTOR DE REFERÊNCIAS • CÁLCULOS DETERMINÍSTICOS</footer>
+</main>
+<script>
+let rolls = [];
+let currentMode = 'auto';
+let referencias = [];
+let historicoDB = new Map();
+const API_URL = window.location.origin;
+
+function getCor(numero) {
+if (numero === 0) return "white";
+if (numero >= 1 && numero <= 7) return "red";
+return "black";
+}
+function getCorTipo(numero) {
+if (numero === 0) return "branco";
+if (numero >= 1 && numero <= 7) return "vermelho";
+return "preto";
+}
+function getTimestampMs(timestamp) {
+const ms = new Date(timestamp).getTime();
+return Number.isFinite(ms) ? ms : 0;
+}
+function getMinutoDoRoll(rollIndex) {
+const timestamp = rolls[rollIndex]?.timestamp;
+if (!timestamp) return 0;
+return new Date(timestamp).getMinutes();
+}
+function sincronizarHistoricoDB(lista) {
+const ocorrenciasTimestamp = {};
+lista.forEach((r, i) => {
+const base = `${r.timestamp}|${r.roll}`;
+const ordem = ocorrenciasTimestamp[base] || 0;
+ocorrenciasTimestamp[base] = ordem + 1;
+r.__eventKey = `${base}|${ordem}`;
+r.__ordemOriginal = i;
+r.__timestampMs = getTimestampMs(r.timestamp);
+historicoDB.set(r.__eventKey, r);
+});
+}
+function obterEventosCronologicos() {
+return Array.from(historicoDB.values())
+.filter(r => r && r.__timestampMs)
+.sort((a, b) => (a.__timestampMs - b.__timestampMs) || (a.__ordemOriginal - b.__ordemOriginal));
+}
+function getEventoPorChave(chave) {
+return chave ? historicoDB.get(chave) || null : null;
+}
+function formatTime(timestamp) {
+const date = new Date(timestamp);
+return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function minutoParaHora(valorBruto) {
+if (rolls.length === 0) return pad2(valorBruto % 60);
+const ultimoRoll = rolls[0];
+const dataReferencia = new Date(ultimoRoll.timestamp);
+const dataAlvo = new Date(dataReferencia);
+const horasExtras = Math.floor(valorBruto / 60);
+const minutos = valorBruto % 60;
+dataAlvo.setHours(dataAlvo.getHours() + horasExtras);
+dataAlvo.setMinutes(minutos, 0, 0);
+if (dataAlvo.getTime() <= dataReferencia.getTime()) {
+dataAlvo.setDate(dataAlvo.getDate() + 1);
+}
+return dataAlvo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function horarioRealDaReferencia(timestampReferencia) {
+  if (!timestampReferencia) return '--:--';
+  const d = new Date(timestampReferencia);
+  if (Number.isNaN(d.getTime())) return '--:--';
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function minutoParaHoraComRef(valorBruto, timestampReferencia) {
+if (!timestampReferencia) return pad2(valorBruto % 60);
+const dataReferencia = new Date(timestampReferencia);
+const dataAlvo = new Date(dataReferencia);
+const bruto = Number(valorBruto);
+if (!Number.isFinite(bruto)) return '--:--';
+const horasExtras = Math.floor(bruto / 60);
+const minutos = ((bruto % 60) + 60) % 60;
+dataAlvo.setSeconds(0, 0);
+dataAlvo.setHours(dataAlvo.getHours() + horasExtras);
+dataAlvo.setMinutes(minutos, 0, 0);
+
+// Os alvos do motor representam o minuto dentro do ciclo horário da referência.
+// Se o minuto já passou na hora da referência, ele pertence à HORA SEGUINTE,
+// e não ao dia seguinte. Ex.: Ref 21:58 + alvo 21 => 22:21.
+while (dataAlvo.getTime() <= dataReferencia.getTime()) {
+  dataAlvo.setHours(dataAlvo.getHours() + 1);
+}
+
+return dataAlvo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function fetchRolls() {
+try {
+const limit = document.getElementById('spinsSelect').value;
+const res = await fetch(`${API_URL}/api/rolls?limit=${limit}`);
+const newRolls = await res.json();
+if (JSON.stringify(newRolls) !== JSON.stringify(rolls)) {
+rolls = newRolls;
+sincronizarHistoricoDB(rolls);
+renderAll();
+if (currentMode === 'auto') reconstruirAutomatico();
+processarNovosDados();
+}
+} catch (e) { console.error("Erro ao buscar rolls:", e); }
+}
+
+function connectWebSocket() {
+const ws = new WebSocket(`ws://${window.location.host}/ws`);
+ws.onmessage = (event) => {
+const data = JSON.parse(event.data);
+if (data.type === 'new_roll') fetchRolls();
+};
+ws.onclose = () => setTimeout(connectWebSocket, 3000);
+}
+
+async function simulateRoll() {
+const roll = Math.floor(Math.random() * 15);
+const color = roll === 0 ? 'white' : (roll <= 7 ? 'red' : 'black');
+await fetch(`${API_URL}/api/roll`, {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({ roll, color })
+});
+setTimeout(fetchRolls, 500);
+}
+
+function setMode(mode) {
+currentMode = mode;
+document.getElementById('modeAuto').classList.toggle('active', mode === 'auto');
+document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+const hint = document.getElementById('historyHint');
+if (mode === 'manual') hint.innerText = 'Modo MANUAL: Clique em brancos para selecionar referências';
+else hint.innerText = 'Modo AUTO: Seleção automática dos N brancos mais recentes';
+referencias = [];
+if (mode === 'auto') reconstruirAutomatico();
+else renderAll();
+}
+
+function handleRefsChange() {
+if (currentMode === 'auto') reconstruirAutomatico();
+renderAll();
+}
+
+function reconstruirAutomatico() {
+const N = parseInt(document.getElementById('refsSelect').value);
+const eventos = obterEventosCronologicos();
+const brancos = eventos.filter(r => r.roll === 0);
+const candidatos = brancos.slice(-N).reverse();
+const validos = [];
+for (let i = 0; i < candidatos.length; i++) {
+if (i === 0) { validos.push(candidatos[i]); continue; }
+const anterior = getTimestampMs(candidatos[i - 1].timestamp);
+const atual = getTimestampMs(candidatos[i].timestamp);
+const diffMinutos = Math.abs(anterior - atual) / 60000;
+if (diffMinutos <= 10) validos.push(candidatos[i]);
+else break;
+}
+// Preserva arrastos existentes para não resetar a cada fetch
+const mapaExistente = new Map(referencias.map(r => [r.id, r]));
+const novasReferencias = validos.map((b, idx) => {
+  const existente = mapaExistente.get(b.__eventKey);
+  if (existente) {
+    // Mantém vias e arrastos já calculados, só atualiza índices
+    existente.idx = idx;
+    existente.ordemSelecao = idx;
+    return existente;
+  }
+  return criarReferencia(b, idx, 'auto', idx);
+});
+referencias = novasReferencias;
+atualizarContadores();
+renderAll();
+processarArrastos();
+}
+
+function selectWhiteRoll(eventKey) {
+if (currentMode !== 'manual') return;
+const N = parseInt(document.getElementById('refsSelect').value);
+const existingIndex = referencias.findIndex(r => r.id === eventKey);
+if (existingIndex >= 0) {
+referencias.splice(existingIndex, 1);
+referencias.forEach((r, i) => r.idx = i);
+} else {
+if (referencias.length >= N) { mostrarLimite(); return; }
+const roll = getEventoPorChave(eventKey);
+if (!roll || roll.roll !== 0) return;
+referencias.push(criarReferencia(roll, referencias.length, 'manual', referencias.length));
+}
+esconderLimite();
+renderAll();
+processarArrastos();
+}
+
+function removeReferencia(eventKey) {
+const idx = referencias.findIndex(r => r.id === eventKey);
+if (idx >= 0) {
+referencias.splice(idx, 1);
+referencias.forEach((r, i) => r.idx = i);
+}
+renderAll();
+processarArrastos();
+}
+
+function mostrarLimite() {
+const N = parseInt(document.getElementById('refsSelect').value);
+document.getElementById('limitN').innerText = N;
+document.getElementById('limitWarning').classList.add('show');
+setTimeout(esconderLimite, 3000);
+}
+
+function esconderLimite() {
+document.getElementById('limitWarning').classList.remove('show');
+}
+
+function criarReferencia(roll, idx, origem, ordemSelecao) {
+const eventos = obterEventosCronologicos();
+const pos = eventos.findIndex(r => r.__eventKey === roll.__eventKey);
+const anterior = pos > 0 ? eventos[pos - 1] : null;
+const posterior = pos >= 0 && pos < eventos.length - 1 ? eventos[pos + 1] : null;
+const M = new Date(roll.timestamp).getMinutes();
+const p_tras = anterior?.roll ?? 0;
+const p_frente = posterior?.roll ?? 0;
+
+const C1 = p_tras + M;
+const C3 = p_frente + M;
+const C2 = p_tras + M + p_frente;
+const recuperacao = [15, 18, 22, 25, 30, 35].map(offset => M + offset);
+
+const makeVia = (tipo, alvo) => ({
+tipo, minutoInicial: alvo, minutoAlvo: alvo, ativa: true, status: 'pendente',
+pagoExato: false, pagoMargem: false, arrastos: [],
+ultimoTimestampProcessado: roll.timestamp, alvosProcessados: []
+});
+return {
+id: roll.__eventKey, idx, ordemSelecao, M, p_tras, p_frente, C1, C2, C3, recuperacao,
+vias: [makeVia('C1', C1), makeVia('C2', C2), makeVia('C3', C3)],
+timestamp: roll.timestamp, origem, rollNumero: roll.roll, rollHorario: formatTime(roll.timestamp),
+rollIndex: rolls.findIndex(r => r.__eventKey === roll.__eventKey),
+referenciaAnteriorId: anterior?.__eventKey || null,
+referenciaPosteriorId: posterior?.__eventKey || null
+};
+}
+
+function clearSelection() {
+referencias = [];
+esconderLimite();
+if (currentMode === 'auto') reconstruirAutomatico();
+else renderAll();
+document.getElementById('signalLogs').innerText = '';
+}
+
+function clearData() {
+rolls = [];
+historicoDB.clear();
+referencias = [];
+esconderLimite();
+document.getElementById('signalLogs').innerText = '';
+renderAll();
+}
+
+function calcularBlocoAlvo(minutoBruto, cursorMs) {
+    const minuto = ((Number(minutoBruto) % 60) + 60) % 60;
+    const cursorDate = new Date(cursorMs || Date.now());
+    const alvo = new Date(cursorDate);
+    alvo.setSeconds(0, 0);
+    alvo.setMinutes(minuto);
+
+    // O alvo precisa ser SEMPRE posterior ao cursor.
+    // Se o minuto já passou nesta hora, vai para a próxima hora.
+    if (alvo.getTime() <= cursorDate.getTime()) {
+        alvo.setHours(alvo.getHours() + 1);
+    }
+
+    return {
+        inicioMs: alvo.getTime(),
+        fimMs: alvo.getTime() + 60000,
+        minuto,
+        data: alvo
+    };
+}
+
+function getBlocoAlvoCronologico(minutoBruto, ref, via) {
+    if (!ref || !via) return null;
+    const cursorMs = getTimestampMs(via.ultimoTimestampProcessado || ref.timestamp);
+    return calcularBlocoAlvo(minutoBruto, cursorMs);
+}
+
+function getProximaOcorrenciaDoMinuto(minutoBruto, ref, via) {
+    const bloco = getBlocoAlvoCronologico(minutoBruto, ref, via);
+    if (!bloco) return null;
+
+    const agoraMs = getAgoraAnaliseMs();
+    const cursorMs = getTimestampMs(via.ultimoTimestampProcessado || ref.timestamp);
+
+    // REGRA TEMPORAL: nunca consumir evento que ainda nao chegou.
+    return obterEventosCronologicos().find(r => {
+        const ts = getTimestampMs(r.timestamp);
+        return ts > cursorMs &&
+               ts <= agoraMs &&
+               ts >= bloco.inicioMs &&
+               ts < bloco.fimMs;
+    }) || null;
+}
+
+function registrarAlvoProcessado(via, ocorrencia, resultadoPagamento, alvoTimestamp) {
+    if (!via.alvosProcessados) via.alvosProcessados = [];
+    if (!ocorrencia || !ocorrencia.__eventKey) return;
+    if (!via.alvosProcessados.some(a => a.eventKey === ocorrencia.__eventKey)) {
+        const tsAlvo = alvoTimestamp || ocorrencia.timestamp;
+        via.alvosProcessados.push({
+            eventKey: ocorrencia.__eventKey,
+            timestamp: tsAlvo,
+            minuto: new Date(tsAlvo).getMinutes(),
+            resultado: resultadoPagamento
+        });
+    }
+}
+
+function getAgoraAnaliseMs() {
+    // Em tempo real, nunca usamos eventos que ainda pertencem ao futuro.
+    // O histórico pode estar adiantado, mas o pagamento só existe quando o relógio chega ao horário.
+    return Date.now();
+}
+
+function avaliarPagamentoDaOcorrencia(ocorrencia, via, ref) {
+    if (!ocorrencia || !via || !ref) return 'pendente';
+
+    const bloco = getBlocoAlvoCronologico(via.minutoAlvo, ref, via);
+    if (!bloco) return 'pendente';
+
+    const agoraMs = getAgoraAnaliseMs();
+    const refMs = getTimestampMs(ref.timestamp);
+    const eventos = obterEventosCronologicos().filter(r => {
+        const ts = getTimestampMs(r.timestamp);
+        return ts > refMs && ts <= agoraMs;
+    });
+
+    // O alvo ainda nao chegou: sem pagamento e sem margem.
+    if (agoraMs < bloco.inicioMs) {
+        via.pagoExato = false;
+        via.pagoMargem = false;
+        via.status = 'pendente';
+        return 'pendente';
+    }
+
+    const brancoExato = eventos.some(r => {
+        const ts = getTimestampMs(r.timestamp);
+        return r.roll === 0 && ts >= bloco.inicioMs && ts < bloco.fimMs;
+    });
+
+    if (brancoExato) {
+        via.pagoExato = true;
+        via.pagoMargem = false;
+        via.ativa = false;
+        via.status = 'pago-exato';
+        registrarAlvoProcessado(via, ocorrencia, 'exato', new Date(bloco.inicioMs).toISOString());
+        return 'exato';
+    }
+
+    // Margem anterior: so pode ser confirmada depois que o alvo chegou.
+    const inicioMargemAnterior = bloco.inicioMs - 60000;
+    const brancoAntes = agoraMs >= bloco.inicioMs && eventos.some(r => {
+        const ts = getTimestampMs(r.timestamp);
+        return r.roll === 0 && ts >= inicioMargemAnterior && ts < bloco.inicioMs;
+    });
+
+    // Margem posterior: so pode ser confirmada depois que o minuto posterior terminou.
+    const inicioMargemPosterior = bloco.fimMs;
+    const fimMargemPosterior = bloco.fimMs + 60000;
+    const brancoDepois = agoraMs >= fimMargemPosterior && eventos.some(r => {
+        const ts = getTimestampMs(r.timestamp);
+        return r.roll === 0 && ts >= inicioMargemPosterior && ts < fimMargemPosterior;
+    });
+
+    if (brancoAntes || brancoDepois) {
+        via.pagoMargem = true;
+        via.status = 'pago-margem';
+        registrarAlvoProcessado(via, ocorrencia, 'margem', new Date(bloco.inicioMs).toISOString());
+        return 'margem';
+    }
+
+    via.pagoMargem = false;
+    via.status = 'pendente';
+    registrarAlvoProcessado(via, ocorrencia, 'pendente', new Date(bloco.inicioMs).toISOString());
+    return 'pendente';
+}
+
+function verificarMargensPendentes() {
+    const agoraMs = getAgoraAnaliseMs();
+    const eventos = obterEventosCronologicos();
+
+    referencias.forEach(ref => ref.vias.forEach(via => {
+        (via.alvosProcessados || []).forEach(alvo => {
+            if (alvo.resultado === 'exato' || alvo.resultado === 'margem') return;
+
+            const inicio = getTimestampMs(alvo.timestamp);
+            if (!Number.isFinite(inicio)) return;
+            const refMs = getTimestampMs(ref.timestamp);
+
+            // Antes do alvo: impossivel confirmar margem.
+            if (agoraMs < inicio) return;
+
+            const brancoAntes = eventos.some(r => {
+                const rts = getTimestampMs(r.timestamp);
+                return r.roll === 0 && rts > refMs && rts <= agoraMs &&
+                       rts >= inicio - 60000 && rts < inicio;
+            });
+
+            // O minuto posterior precisa ter terminado para ser margem posterior.
+            const brancoDepois = agoraMs >= inicio + 120000 && eventos.some(r => {
+                const rts = getTimestampMs(r.timestamp);
+                return r.roll === 0 && rts > refMs && rts <= agoraMs &&
+                       rts >= inicio + 60000 && rts < inicio + 120000;
+            });
+
+            if (brancoAntes || brancoDepois) {
+                alvo.resultado = 'margem';
+                via.pagoMargem = true;
+                via.status = 'pago-margem';
+            }
+        });
+    }));
+}
+
+function verificarPagamentos() {
+    verificarMargensPendentes();
+    referencias.forEach(ref => ref.vias.forEach(via => {
+        if (!via.ativa) return;
+        const ocorrencia = getProximaOcorrenciaDoMinuto(via.minutoAlvo, ref, via);
+        if (ocorrencia) avaliarPagamentoDaOcorrencia(ocorrencia, via, ref);
+    }));
+}
+
+// Busca as DUAS pedras do BLOCO CALENDÁRIO exato do alvo, sempre depois
+// do cursor daquela via. Nunca usa rolls[0] para decidir a hora.
+function getPedrasDoMinuto(minutoBruto, ref, via) {
+    const bloco = getBlocoAlvoCronologico(minutoBruto, ref, via);
+    if (!bloco) return null;
+
+    const cursorMs = getTimestampMs(via.ultimoTimestampProcessado || ref.timestamp);
+    const agoraMs = getAgoraAnaliseMs();
+
+    const eventos = obterEventosCronologicos().filter(r => {
+        const ts = getTimestampMs(r.timestamp);
+        return ts > cursorMs &&
+               ts <= agoraMs &&
+               ts >= bloco.inicioMs &&
+               ts < bloco.fimMs &&
+               r.roll !== 0;
+    });
+
+    if (eventos.length < 2) return null;
+
+    const selecionadas = eventos.slice(-2);
+    return {
+        p1: selecionadas[0].roll,
+        p2: selecionadas[1].roll,
+        eventKeys: selecionadas.map(r => r.__eventKey),
+        timestamps: selecionadas.map(r => r.timestamp),
+        inicioMs: bloco.inicioMs,
+        fimMs: bloco.fimMs
+    };
+}
+
+function lapidarArrasto(p1, p2, minutoAtual) {
+    const tipo1 = getCorTipo(p1);
+    const tipo2 = getCorTipo(p2);
+    const soma = p1 + p2;
+    const gatilhosEspeciais = [10, 11, 20, 21];
+
+    // REGRA ESPECIAL: 10, 11, 20 ou 21 NÃO vira unidade.
+    // Vai exatamente +1 minuto e o próximo ciclo usa as pedras desse novo minuto.
+    if (gatilhosEspeciais.includes(soma)) {
+        return {
+            valorDeslocamento: 1,
+            novoAlvo: minutoAtual + 1,
+            gatilhoEspecial: true,
+            regraAplicada: `⚡ GATILHO ${soma}: ${p1}+${p2}=${soma} → NÃO reduz à unidade → avança exatamente +1 minuto → ${minutoAtual + 1}`
+        };
+    }
+
+    let valorDeslocamento;
+    let regraAplicada;
+
+    if (tipo1 === 'vermelho' && tipo2 === 'vermelho') {
+        const diff = Math.abs(p1 - p2);
+        if (diff === 1) {
+            valorDeslocamento = Math.max(p1, p2);
+            regraAplicada = `🔴 Vermelhas vizinhas (|${p1}-${p2}|=1) → isola maior: ${valorDeslocamento}`;
+        } else if (p1 === p2) {
+            valorDeslocamento = p1;
+            regraAplicada = `🔴 Vermelhas iguais (${p1}=${p2}) → usa uma: ${valorDeslocamento}`;
+        } else {
+            valorDeslocamento = soma % 10;
+            regraAplicada = `🔴 Vermelhas não-vizinhas → ${p1}+${p2}=${soma} → unidade: ${valorDeslocamento}`;
+        }
+    } else if (tipo1 === 'preto' && tipo2 === 'preto') {
+        if (p1 === p2) {
+            valorDeslocamento = p1 % 10;
+            regraAplicada = `⬛ Pretas iguais (${p1}=${p2}) → usa uma e elimina dezena: ${valorDeslocamento}`;
+        } else {
+            valorDeslocamento = soma % 10;
+            regraAplicada = `⬛ Pretas diferentes → ${p1}+${p2}=${soma} → unidade: ${valorDeslocamento}`;
+        }
+    } else {
+        valorDeslocamento = soma % 10;
+        regraAplicada = `🎨 Cores mistas → ${p1}+${p2}=${soma} → unidade: ${valorDeslocamento}`;
+    }
+
+    return {
+        valorDeslocamento,
+        novoAlvo: minutoAtual + valorDeslocamento,
+        gatilhoEspecial: false,
+        regraAplicada
+    };
+}
+
+function processarArrastos() {
+    referencias.forEach(ref => {
+        const viasOrdenadas = [...ref.vias].sort((a, b) => a.minutoInicial - b.minutoInicial);
+
+        viasOrdenadas.forEach(via => {
+            if (!via.ativa) return;
+
+            let passos = 0;
+
+            while (via.ativa && passos < 1000) {
+                const minutoAtual = via.minutoAlvo;
+                const cursorAntes = getTimestampMs(via.ultimoTimestampProcessado || ref.timestamp);
+
+                // 1) Primeiro procura o bloco cronológico exato do alvo.
+                const ocorrencia = getProximaOcorrenciaDoMinuto(minutoAtual, ref, via);
+                if (!ocorrencia) break;
+
+                // 2) Branco exato encerra a via. Margem NÃO encerra.
+                const pagamento = avaliarPagamentoDaOcorrencia(ocorrencia, via, ref);
+                if (pagamento === 'exato') break;
+
+                // 3) No alvo sem branco, usa as duas pedras desse MESMO minuto.
+                const pedras = getPedrasDoMinuto(minutoAtual, ref, via);
+                if (!pedras) break; // aguarda a segunda pedra; não destrói o estado
+
+                const resultado = lapidarArrasto(pedras.p1, pedras.p2, minutoAtual);
+
+                // 4) Consome TODOS os eventos usados neste passo.
+                const usados = [
+                    ocorrencia,
+                    ...pedras.eventKeys.map(getEventoPorChave).filter(Boolean)
+                ];
+                const ultimo = Math.max(
+                    cursorAntes,
+                    ...usados.map(r => getTimestampMs(r.timestamp))
+                );
+
+                // Proteção contra loop infinito: o cursor precisa avançar.
+                if (ultimo <= cursorAntes) break;
+
+                via.arrastos.push({
+                    minutoOrigem: minutoAtual,
+                    p1: pedras.p1,
+                    p2: pedras.p2,
+                    deslocamento: resultado.valorDeslocamento,
+                    novoAlvo: resultado.novoAlvo,
+                    gatilho: resultado.gatilhoEspecial,
+                    regra: resultado.regraAplicada,
+                    timestampOcorrencia: ocorrencia.timestamp,
+                    eventKeyOcorrencia: ocorrencia.__eventKey,
+                    eventKeysPedras: pedras.eventKeys,
+                    timestampsPedras: pedras.timestamps,
+                    timestampAlvo: calcularBlocoAlvo(resultado.novoAlvo, getTimestampMs(ocorrencia.timestamp)).inicioMs,
+                    pagamento
+                });
+
+                via.ultimoTimestampProcessado = new Date(ultimo).toISOString();
+                via.minutoAlvo = resultado.novoAlvo;
+
+                // O pagamento por margem pertence SOMENTE ao alvo que acabou de ser processado.
+                // Ao criar um novo alvo por arrasto, ele começa novamente como PENDENTE.
+                // O pagamento anterior continua preservado em arrastos[].pagamento / alvosProcessados.
+                via.pagoExato = false;
+                via.pagoMargem = false;
+                via.status = 'pendente';
+                passos++;
+            }
+        });
+    });
+
+    verificarMargensPendentes();
+}
+
+function processarNovosDados() {
+if (referencias.length === 0) return;
+verificarPagamentos();
+processarArrastos();
+renderReferencias();
+renderRanking();
+renderPaidResults();
+processarSimulacao();
+}
+
+function calcularConvergencia() {
+    // RANKING EM TEMPO REAL. Cada via contribui somente com o alvo vigente.
+    // Iniciais próximas continuam separadas; igualdade exata une.
+    // Quando existe arrasto, uma fonte pode convergir com outra diretamente
+    // na mesma janela de entrada (+/-1). Não existe agrupamento transitivo:
+    // 21:23 NÃO entra em 21:25 apenas por existir um centro 21:24.
+    // Recuperações nunca criam card; apenas confirmam um card existente.
+
+    const norm = v => ((Number(v) % 60) + 60) % 60;
+    const dist = (a, b) => {
+        const d = Math.abs(norm(a) - norm(b));
+        return Math.min(d, 60 - d);
+    };
+
+    const ativos = [];
+    const recuperacoes = [];
+
+    referencias.forEach(ref => {
+        const refNome = `Ref ${ref.idx + 1}`;
+        const offsets = [15, 18, 22, 25, 30, 35];
+
+        (ref.vias || []).forEach(via => {
+            // Vias que já receberam branco, exato ou em margem, deixam de
+            // participar do Ranking. O histórico do pagamento continua
+            // disponível em RESULTADOS PAGOS.
+            if (via.pagoExato || via.pagoMargem) return;
+
+            const arrastos = via.arrastos || [];
+            if (arrastos.length === 0) {
+                ativos.push({
+                    minuto: via.minutoInicial,
+                    minutoNorm: norm(via.minutoInicial),
+                    fonte: `${via.tipo} inicial (${refNome})`,
+                    timestampBase: ref.timestamp,
+                    id: `${ref.id}|${via.tipo}|INITIAL`,
+                    tipo: 'inicial'
+                });
+            } else {
+                const ultimo = arrastos[arrastos.length - 1];
+                ativos.push({
+                    minuto: ultimo.novoAlvo,
+                    minutoNorm: norm(ultimo.novoAlvo),
+                    fonte: `${via.tipo} arrasto #${arrastos.length} (${refNome})`,
+                    timestampBase: Number.isFinite(Number(ultimo.timestampAlvo)) ? Number(ultimo.timestampAlvo) : ref.timestamp,
+                    id: `${ref.id}|${via.tipo}|CURRENT|${arrastos.length}|${ultimo.novoAlvo}|${ultimo.eventKeyOcorrencia || ''}`,
+                    tipo: 'arrasto'
+                });
+            }
+        });
+
+        (ref.recuperacao || []).forEach((rec, i) => {
+            recuperacoes.push({
+                minuto: rec,
+                minutoNorm: norm(rec),
+                fonte: `Rec+${offsets[i]} (${refNome})`,
+                id: `${ref.id}|REC|${offsets[i]}`
+            });
+        });
+    });
+
+    const resultado = [];
+    const restantes = [...ativos];
+
+    while (restantes.length) {
+        let melhor = null;
+        // O centro precisa ser um minuto REAL de uma fonte. Isso impede
+        // a falsa cadeia 21:23 -> 21:24 -> 21:25.
+        const candidatos = [...new Set(restantes.map(f => f.minutoNorm))];
+
+        candidatos.forEach(centro => {
+            const janelaDireta = restantes.filter(f => dist(f.minutoNorm, centro) <= 1);
+            if (!janelaDireta.length) return;
+
+            const temArrasto = janelaDireta.some(f => f.tipo === 'arrasto');
+            const membros = temArrasto
+                ? janelaDireta
+                : janelaDireta.filter(f => f.minutoNorm === centro);
+            if (!membros.length) return;
+
+            const exatos = membros.filter(f => f.minutoNorm === centro).length;
+            const arrastosExatos = membros.filter(f => f.tipo === 'arrasto' && f.minutoNorm === centro).length;
+            const distanciaTotal = membros.reduce((s, f) => s + dist(f.minutoNorm, centro), 0);
+
+            if (!melhor ||
+                membros.length > melhor.membros.length ||
+                (membros.length === melhor.membros.length && arrastosExatos > melhor.arrastosExatos) ||
+                (membros.length === melhor.membros.length && arrastosExatos === melhor.arrastosExatos && exatos > melhor.exatos) ||
+                (membros.length === melhor.membros.length && arrastosExatos === melhor.arrastosExatos && exatos === melhor.exatos && distanciaTotal < melhor.distanciaTotal) ||
+                (membros.length === melhor.membros.length && arrastosExatos === melhor.arrastosExatos && exatos === melhor.exatos && distanciaTotal === melhor.distanciaTotal && centro < melhor.centro)) {
+                melhor = { centro, membros, exatos, arrastosExatos, distanciaTotal };
+            }
+        });
+
+        if (!melhor) break;
+
+        const contagem = new Map();
+        melhor.membros.forEach(f => contagem.set(f.minutoNorm, (contagem.get(f.minutoNorm) || 0) + 1));
+        const minutoRepresentante = [...contagem.entries()]
+            .sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
+
+        resultado.push({
+            minuto: minutoRepresentante,
+            total: melhor.membros.length,
+            fontes: melhor.membros.map(f => f.fonte),
+            principais: melhor.membros.map(f => f.fonte),
+            timestampBase: melhor.membros[0]?.timestampBase || null,
+            recuperacoes: [],
+            idsPrincipais: melhor.membros.map(f => f.id)
+        });
+
+        const ids = new Set(melhor.membros.map(f => f.id));
+        for (let i = restantes.length - 1; i >= 0; i--) {
+            if (ids.has(restantes[i].id)) restantes.splice(i, 1);
+        }
+    }
+
+    resultado.forEach(card => {
+        const candidatas = recuperacoes.filter(r => dist(r.minutoNorm, norm(card.minuto)) <= 1);
+        if (!candidatas.length) return;
+        card.total += candidatas.length;
+        card.recuperacoes.push(...candidatas.map(r => r.fonte));
+        card.fontes.push(...candidatas.map(r => `${r.fonte} [confirmação]`));
+    });
+
+    return resultado.sort((a, b) => b.total - a.total || a.minuto - b.minuto);
+}
+
+function atualizarContadores() {
+document.getElementById('refsCounter').innerText = `${referencias.length} selecionada${referencias.length !== 1 ? 's' : ''}`;
+const totalVias = referencias.reduce((sum, r) => sum + r.vias.length, 0);
+const modeText = currentMode === 'auto' ? 'AUTO' : 'MANUAL';
+const statusText = referencias.length === 0 
+? `⏳ AGUARDANDO REFERÊNCIA — Modo ${modeText}`
+: `✅ MOTOR ATIVO — ${referencias.length} referência(s) • ${totalVias} via(s) • Modo ${modeText}`;
+document.getElementById('statusText').innerText = statusText;
+const badge = document.getElementById('modeBadge');
+if (referencias.length > 0) {
+badge.innerHTML = `<span class="mode-indicator ${currentMode}">${currentMode === 'auto' ? '⚡ AUTO' : ' MANUAL'}</span>`;
+} else {
+badge.innerHTML = '';
+}
+}
+
+function renderAll() {
+renderStream();
+renderFreqMap();
+renderHistory();
+renderReferencias();
+renderRanking();
+renderPaidResults();
+atualizarContadores();
+document.getElementById('rollCount').innerText = rolls.length;
+document.getElementById('historyCount').innerText = rolls.length;
+if (rolls.length > 0) {
+const lastTimestamp = rolls[0].timestamp;
+const lastDate = new Date(lastTimestamp);
+document.getElementById('lastUpdate').innerText = '◷ ' + lastDate.toLocaleString('pt-BR');
+}
+}
+
+function renderStream() {
+const resultList = document.getElementById('resultList');
+resultList.innerHTML = '';
+rolls.slice(0, 18).forEach((r) => {
+const div = document.createElement('div');
+const ref = referencias.find(ref => ref.id === r.__eventKey);
+div.className = `result ${ref ? 'selected' : ''}`;
+if (r.roll === 0 && currentMode === 'manual') {
+div.onclick = () => selectWhiteRoll(r.__eventKey);
+div.style.cursor = 'pointer';
+}
+let html = `<div class="ball ${getCor(r.roll)}">${r.roll}</div><div class="result-time">${formatTime(r.timestamp)}</div>`;
+if (ref) html += `<div class="ref-number">${ref.idx + 1}</div>`;
+div.innerHTML = html;
+resultList.appendChild(div);
+});
+}
+
+function renderFreqMap() {
+const freqMap = document.getElementById('frequencyMap');
+freqMap.innerHTML = '';
+const counts = {};
+rolls.filter(r => r.roll === 0).forEach((r) => {
+const rollIndex = rolls.indexOf(r);
+const min = getMinutoDoRoll(rollIndex);
+counts[min] = (counts[min] || 0) + 1;
+});
+const maxCount = Math.max(...Object.values(counts), 1);
+for (let i = 0; i < 60; i++) {
+const count = counts[i] || 0;
+const percentual = (count / maxCount) * 100;
+const isHot = count >= 2;
+const div = document.createElement('div');
+div.className = `freq ${isHot ? 'hot' : ''}`;
+div.style.setProperty('--level', percentual + '%');
+div.innerHTML = `<div class="freq-number">${pad2(i)}</div><div class="freq-count">${count}</div>`;
+freqMap.appendChild(div);
+}
+}
+
+function renderHistory() {
+const historyGrid = document.getElementById('historyGrid');
+historyGrid.innerHTML = '';
+rolls.forEach((r) => {
+const div = document.createElement('div');
+const ref = referencias.find(ref => ref.id === r.__eventKey);
+div.className = `history-item ${ref ? 'selected' : ''}`;
+if (r.roll === 0 && currentMode === 'manual') {
+div.onclick = () => selectWhiteRoll(r.__eventKey);
+div.style.cursor = 'pointer';
+}
+let html = `<div class="ball ${getCor(r.roll)}">${r.roll}</div><div class="history-time">${formatTime(r.timestamp)}</div>`;
+if (ref) html += `<div class="ref-number">${ref.idx + 1}</div>`;
+div.innerHTML = html;
+historyGrid.appendChild(div);
+});
+}
+
+function renderReferencias() {
+const container = document.getElementById('refsContainer');
+if (referencias.length === 0) {
+const modeText = currentMode === 'auto' ? 'Automático' : 'Manual';
+container.innerHTML = `<div class="empty-state"><div class="icon">🎯</div><div class="title">AGUARDANDO REFERÊNCIA</div><div class="desc">Modo ${modeText}: ${currentMode === 'auto' ? 'Seleção automática ativa' : 'Clique em um branco no histórico'}</div></div>`;
+return;
+}
+container.innerHTML = '';
+referencias.forEach(ref => {
+const div = document.createElement('div');
+div.className = 'ref-card';
+let viasHtml = '';
+
+ref.vias.forEach(via => {
+let statusClass = 'ativa';
+let statusText = 'pendente';
+let statusCls = 'pendente';
+if (via.pagoExato) { statusClass = 'pago-exato'; statusText = 'PAGO EXATO'; statusCls = 'exato'; }
+else if (via.pagoMargem) { statusClass = 'pago-margem'; statusText = 'PAGO MARGEM'; statusCls = 'margem'; }
+
+const qtdArrastos = (via.arrastos||[]).length;
+let arrastosHtml = '';
+if (qtdArrastos>0) {
+  arrastosHtml = `<div style="margin-top:8px; font-size:8px; color:#31e6a1; line-height:1.4;">`;
+  via.arrastos.slice(-6).forEach((arr, idx)=>{
+    const origem = minutoParaHoraComRef(arr.minutoOrigem, ref.timestamp);
+    const destino = minutoParaHoraComRef(arr.novoAlvo, ref.timestamp);
+    arrastosHtml += `<div>${origem} [${arr.p1}+${arr.p2}=${arr.p1+arr.p2}] → ${destino} ${arr.gatilho?'⚡':''}</div>`;
+  });
+  if (qtdArrastos>6) arrastosHtml += `<div>+${qtdArrastos-6} anteriores...</div>`;
+  arrastosHtml += `</div>`;
+}
+
+viasHtml += `
+<div class="via-box ${statusClass}">
+<div class="via-tipo">${via.tipo} ${qtdArrastos>0?`(${qtdArrastos} arrastos)`:''}</div>
+<div class="via-alvo">${minutoParaHoraComRef(via.minutoAlvo, ref.timestamp)}</div>
+<div class="via-proximo">PRÓXIMO SINAL</div>
+<div class="via-status ${statusCls}">${statusText}</div>
+${arrastosHtml}
+</div>
+`;
+});
+
+const origemClass = ref.origem === 'auto' ? 'auto' : 'manual';
+const origemText = ref.origem === 'auto' ? 'AUTO' : 'MANUAL';
+div.innerHTML = `
+<div class="ref-card-header">
+<div class="ref-title">
+REF ${ref.idx + 1} • M=${horarioRealDaReferencia(ref.timestamp)} • Branco: ${ref.rollNumero} às ${ref.rollHorario}
+<span class="ref-origin ${origemClass}">${origemText}</span>
+</div>
+<button class="ref-remove" onclick="removeReferencia('${ref.id}')">✕ Remover</button>
+</div>
+<div class="ref-info">
+<strong>Pedra de trás:</strong> ${ref.p_tras} | <strong>Pedra da frente:</strong> ${ref.p_frente}
+</div>
+<div class="ref-info">
+<strong>C1:</strong> ${minutoParaHoraComRef(ref.C1, ref.timestamp)} | 
+<strong>C3:</strong> ${minutoParaHoraComRef(ref.C3, ref.timestamp)} | 
+<strong>C2:</strong> ${minutoParaHoraComRef(ref.C2, ref.timestamp)}
+</div>
+<div class="ref-info">
+<strong>Rec:</strong> ${ref.recuperacao.map(r => minutoParaHoraComRef(r, ref.timestamp)).join(', ')}
+</div>
+<div class="vias-row">${viasHtml}</div>
+`;
+container.appendChild(div);
+});
+}
+
+let paidResultsVisible = false;
+
+function togglePaidResults() {
+    paidResultsVisible = !paidResultsVisible;
+    const box = document.getElementById('paidResults');
+    const btn = document.getElementById('togglePaidResultsBtn');
+    if (!box || !btn) return;
+    box.classList.toggle('show', paidResultsVisible);
+    btn.textContent = paidResultsVisible ? '🙈 OCULTAR PAGOS' : '👁 MOSTRAR PAGOS';
+    if (paidResultsVisible) renderPaidResults();
+}
+
+function coletarResultadosPagos() {
+    const eventos = obterEventosCronologicos();
+    const porId = new Map(eventos.map(e => [e.__eventKey, e]));
+    const agoraMs = getAgoraAnaliseMs();
+    const resultados = new Map();
+
+    // Um pagamento é identificado pelo alvo cronológico + tipo.
+    // O mesmo alvo pode ter várias fontes pagando: todas entram no mesmo grupo.
+    function adicionarPagamento(item) {
+        if (item.resultado !== 'exato' && item.resultado !== 'margem') return;
+        const entradasPorAlvo = sim && sim.coverage === 'margin' ? 6 : 2;
+        const indiceSlot = item.slotIndex != null ? Number(item.slotIndex) : null;
+        const indiceArrasto = item.arrastoIndex != null ? Number(item.arrastoIndex) : -1;
+        const entradasNecessarias = Number.isFinite(indiceSlot) ? Math.max(0, indiceArrasto + 1) * entradasPorAlvo + indiceSlot : null;
+        const alvoTs = getTimestampMs(item.alvoTs);
+        if (!Number.isFinite(alvoTs)) return;
+
+        const chave = `${Math.floor(alvoTs / 60000)}|${item.resultado}`;
+        let grupo = resultados.get(chave);
+        if (!grupo) {
+            grupo = {
+                resultado: item.resultado,
+                alvoTs,
+                brancos: new Map(),
+                fontes: [],
+                quantidade: 0,
+                entradas: [],
+                ordem: alvoTs
+            };
+            resultados.set(chave, grupo);
+        }
+
+        // Cada via/fonte que realmente pagou conta como uma confirmação.
+        const fonte = `${item.ref || ''}${item.via ? ` • ${item.via}` : ''}${item.arrasto ? ` #${item.arrasto}` : ''}`;
+        const fonteKey = `${fonte}|${item.brancoTs || ''}`;
+        if (!grupo._fontesContadas) grupo._fontesContadas = new Set();
+        if (!grupo._fontesContadas.has(fonteKey)) {
+            grupo._fontesContadas.add(fonteKey);
+            grupo.quantidade++;
+            if (fonte) grupo.fontes.push(fonte);
+            if (Number.isFinite(entradasNecessarias)) grupo.entradas.push({ fonte, valor: entradasNecessarias });
+        }
+
+        if (Number.isFinite(item.brancoTs)) {
+            const bkey = `${Math.floor(item.brancoTs / 60000)}|${item.branco || 0}`;
+            if (!grupo.brancos.has(bkey)) {
+                grupo.brancos.set(bkey, {
+                    timestamp: item.brancoTs,
+                    roll: item.branco || 0
+                });
+            }
+        }
+    }
+
+    function localizarPagamento(alvoTs, refTs) {
+        const alvo = getTimestampMs(alvoTs);
+        const ref = getTimestampMs(refTs);
+        if (!Number.isFinite(alvo) || !Number.isFinite(ref)) return null;
+
+        const inicio = new Date(alvo);
+        inicio.setSeconds(0, 0);
+        inicio.setMilliseconds(0);
+        const t = inicio.getTime();
+        const fim = t + 60000;
+
+        const elegiveis = eventos.filter(e => {
+            const ts = getTimestampMs(e.timestamp);
+            return e.roll === 0 && ts > ref && ts <= agoraMs;
+        });
+
+        // EXATO: branco dentro do próprio minuto do alvo.
+        const exato = elegiveis.find(e => {
+            const ts = getTimestampMs(e.timestamp);
+            return ts >= t && ts < fim;
+        });
+        if (exato) {
+            return {
+                resultado: 'exato',
+                alvoTs: t,
+                brancoTs: getTimestampMs(exato.timestamp),
+                branco: exato.roll
+            };
+        }
+
+        // MARGEM -1: só pode ser considerada depois que o alvo chegou.
+        if (agoraMs >= t) {
+            const anterior = elegiveis.find(e => {
+                const ts = getTimestampMs(e.timestamp);
+                return ts >= t - 60000 && ts < t;
+            });
+            if (anterior) {
+                return {
+                    resultado: 'margem',
+                    alvoTs: t,
+                    brancoTs: getTimestampMs(anterior.timestamp),
+                    branco: anterior.roll
+                };
+            }
+        }
+
+        // MARGEM +1: só pode ser considerada depois que o minuto posterior terminou.
+        if (agoraMs >= t + 120000) {
+            const posterior = elegiveis.find(e => {
+                const ts = getTimestampMs(e.timestamp);
+                return ts >= fim && ts < fim + 60000;
+            });
+            if (posterior) {
+                return {
+                    resultado: 'margem',
+                    alvoTs: t,
+                    brancoTs: getTimestampMs(posterior.timestamp),
+                    branco: posterior.roll
+                };
+            }
+        }
+        return null;
+    }
+
+    referencias.forEach((ref, ri) => {
+        (ref.vias || []).forEach(via => {
+            const refTs = getTimestampMs(ref.timestamp);
+
+            // 1) Tudo que já foi explicitamente registrado pelo motor.
+            (via.alvosProcessados || []).forEach(a => {
+                if (a.resultado !== 'exato' && a.resultado !== 'margem') return;
+                const ev = a.eventKey ? porId.get(a.eventKey) : null;
+                const pagamento = localizarPagamento(a.timestamp, refTs);
+                adicionarPagamento({
+                    ref: `Ref ${ri + 1}`,
+                    via: via.tipo,
+                    resultado: a.resultado,
+                    alvoTs: a.timestamp,
+                    brancoTs: ev ? getTimestampMs(ev.timestamp) : pagamento?.brancoTs,
+                    branco: ev ? ev.roll : pagamento?.branco,
+                    slotIndex: pagamento ? (pagamento.resultado === 'margem' ? (pagamento.brancoTs < pagamento.alvoTs ? 1 : 5) : 3) : null,
+                    arrastoIndex: (() => {
+                        const tsa = getTimestampMs(a.timestamp);
+                        const idx = (via.arrastos || []).findIndex(x => { const tsx = getTimestampMs(x.timestampOcorrencia); return Number.isFinite(tsx) && Number.isFinite(tsa) && Math.floor(tsx / 60000) === Math.floor(tsa / 60000); });
+                        return idx;
+                    })()
+                });
+            });
+
+            // 2) Cada arrasto representa um alvo que foi efetivamente processado.
+            // Mesmo que o registro antigo não tenha salvo a margem -1, reconstruímos
+            // o pagamento a partir do relógio e do branco real existente no histórico.
+            (via.arrastos || []).forEach((a, idx) => {
+                const alvoTs = getTimestampMs(a.timestampOcorrencia);
+                if (!Number.isFinite(alvoTs)) return;
+                const alvoMin = new Date(alvoTs);
+                alvoMin.setSeconds(0, 0);
+                alvoMin.setMilliseconds(0);
+                const pagamento = localizarPagamento(alvoMin.getTime(), refTs);
+                if (!pagamento) return;
+
+                const ev = a.eventKeyOcorrencia ? porId.get(a.eventKeyOcorrencia) : null;
+                adicionarPagamento({
+                    ref: `Ref ${ri + 1}`,
+                    via: via.tipo,
+                    resultado: pagamento.resultado,
+                    alvoTs: pagamento.alvoTs,
+                    brancoTs: pagamento.brancoTs || (ev ? getTimestampMs(ev.timestamp) : null),
+                    branco: pagamento.branco || (ev ? ev.roll : 0),
+                    arrasto: idx + 1,
+                    slotIndex: pagamento.resultado === 'margem' ? (pagamento.brancoTs < pagamento.alvoTs ? 1 : 5) : 3,
+                    arrastoIndex: idx
+                });
+            });
+
+            // 3) O alvo atual também precisa entrar no painel, inclusive quando
+            // o branco de margem apareceu antes do motor conseguir criar o registro.
+            if (Number.isFinite(refTs) && via.minutoAlvo != null) {
+                const bloco = getBlocoAlvoCronologico(via.minutoAlvo, ref, via);
+                if (bloco) {
+                    const pagamento = localizarPagamento(bloco.inicioMs, refTs);
+                    if (pagamento) {
+                        adicionarPagamento({
+                            ref: `Ref ${ri + 1}`,
+                            via: via.tipo,
+                            resultado: pagamento.resultado,
+                            alvoTs: pagamento.alvoTs,
+                            brancoTs: pagamento.brancoTs,
+                            branco: pagamento.branco,
+                            slotIndex: pagamento.resultado === 'margem' ? (pagamento.brancoTs < pagamento.alvoTs ? 1 : 5) : 3,
+                            arrastoIndex: (() => {
+                                const idx = (via.arrastos || []).findIndex(x => { const tsx = getTimestampMs(x.timestampOcorrencia); return Number.isFinite(tsx) && Math.floor(tsx / 60000) === Math.floor(bloco.inicioMs / 60000); });
+                                return idx;
+                            })()
+                        });
+                    }
+                }
+            }
+        });
+    });
+
+    return [...resultados.values()].map(g => ({
+        ...g,
+        brancos: [...g.brancos.values()].sort((a,b) => a.timestamp - b.timestamp),
+        fontes: [...new Set(g.fontes)],
+        entradas: g.entradas.sort((a,b) => a.valor - b.valor)
+    })).sort((a,b) => b.ordem - a.ordem);
+}
+
+function renderPaidResults() {
+    const box = document.getElementById('paidResults');
+    if (!box) return;
+    const resultados = coletarResultadosPagos();
+    if (!resultados.length) {
+        box.innerHTML = '<div class="empty-state"><div class="desc">Nenhum branco pago registrado ainda.</div></div>';
+        return;
+    }
+    box.innerHTML = '<div class="paid-results">' + resultados.slice(0,50).map(r => {
+        const cls = r.resultado === 'exato' ? 'exato' : 'margem';
+        const texto = r.resultado === 'exato' ? '🟢 PAGO EXATO' : '🟡 PAGO MARGEM';
+        const alvo = Number.isFinite(r.alvoTs) ? new Date(r.alvoTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '--:--';
+        const branco = r.brancos.length
+            ? r.brancos.map(b => Number.isFinite(b.timestamp) ? new Date(b.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '--:--').join(', ')
+            : '--:--';
+        const detalhe = r.resultado === 'exato'
+            ? `Alvo ${alvo} • Branco ${branco}`
+            : `Alvo ${alvo} • Branco ${branco} (±1)`;
+        const qtd = r.quantidade > 1 ? ` • ${r.quantidade} confirmações` : '';
+        const valoresEntradas = r.entradas && r.entradas.length ? [...new Set(r.entradas.map(e => e.valor))] : [];
+        const entradasTexto = valoresEntradas.length ? ` • Entradas até o acerto: ${valoresEntradas.join(', ')}` : '';
+        const fontes = r.fontes.length > 1 ? `<span class="paid-meta">Fontes: ${r.fontes.join(' | ')}</span>` : '';
+        const detalhesEntradas = r.entradas && r.entradas.length > 1 ? `<span class="paid-meta">Caminho por fonte: ${r.entradas.map(e => `${e.fonte || 'fonte'} = ${e.valor} entradas`).join(' | ')}</span>` : '';
+        return `<div class="paid-row ${cls}"><span class="paid-badge ${cls}">${texto}</span><span>${alvo}${qtd}</span><span class="paid-meta">${detalhe}${entradasTexto}</span>${fontes}${detalhesEntradas}</div>`;
+    }).join('') + '</div>';
+}
+
+function renderRanking() {
+const container = document.getElementById('rankingContainer');
+if (referencias.length === 0) {
+container.innerHTML = `<div class="empty-state"><div class="desc">Nenhuma referência ativa para cruzar</div></div>`;
+return;
+}
+const convergencias = calcularConvergencia();
+if (convergencias.length === 0) {
+container.innerHTML = `<div class="empty-state"><div class="desc">Sem convergências calculadas</div></div>`;
+return;
+}
+container.innerHTML = '';
+const top5 = convergencias.slice(0, 5);
+top5.forEach((c, i) => {
+const div = document.createElement('div');
+div.className = `ranking-item ${i === 0 ? 'top' : ''}`;
+const confText = c.total >= 4 ? `⭐ ${c.total} (BRANCO 100%)` : `${c.total} confirmações`;
+div.innerHTML = `
+<div>
+<div class="ranking-minuto">${minutoParaHoraComRef(c.minuto, c.timestampBase)}</div>
+<div style="font-size: 7px; color: var(--muted); margin-top: 2px;">${c.fontes.slice(0, 2).join(', ')}</div>
+</div>
+<div class="ranking-conf">${confText}</div>
+`;
+container.appendChild(div);
+});
+atualizarLogs(convergencias);
+}
+
+function atualizarLogs(convergencias) {
+let logs = "═══════════════════════════════════════\n";
+logs += "  MOTOR V34+ — AUDITORIA COMPLETA\n";
+logs += "═══════════════════════════════════════\n\n";
+logs += `MODO: ${currentMode === 'auto' ? 'AUTOMÁTICO' : 'MANUAL'}\n`;
+logs += `REFERÊNCIAS ATIVAS: ${referencias.length}\n\n`;
+if (referencias.length === 0) {
+logs += "STATUS: AGUARDANDO REFERÊNCIA\n";
+} else {
+referencias.forEach(ref => {
+logs += `━━━ REFERÊNCIA ${ref.idx + 1} [${ref.origem.toUpperCase()}] ━━━\n`;
+logs += `  Timestamp: ${ref.timestamp}\n`;
+logs += `  BRANCO: ${ref.rollNumero} às ${ref.rollHorario}\n`;
+logs += `  Minuto M = ${horarioRealDaReferencia(ref.timestamp)}\n`;
+logs += `  Registro referência: ${ref.id}\n`;
+logs += `  Pedra de trás: ${ref.p_tras} | Pedra da frente: ${ref.p_frente}\n`;
+logs += `  C1 = ${ref.p_tras} + ${ref.M} = ${ref.C1} → ${minutoParaHoraComRef(ref.C1, ref.timestamp)}\n`;
+logs += `  C3 = ${ref.p_frente} + ${ref.M} = ${ref.C3} → ${minutoParaHoraComRef(ref.C3, ref.timestamp)}\n`;
+logs += `  C2 = ${ref.p_tras} + ${ref.M} + ${ref.p_frente} = ${ref.C2} → ${minutoParaHoraComRef(ref.C2, ref.timestamp)}\n\n`;
+logs += `  Recuperação: ${ref.recuperacao.map(r => `${r}→${minutoParaHoraComRef(r, ref.timestamp)}`).join(', ')}\n`;
+logs += `  Fila ordenada (crescente): ${[ref.C3, ref.C1, ref.C2].sort((a,b) => a-b).map(r => minutoParaHoraComRef(r, ref.timestamp)).join(' → ')}\n\n`;
+
+ref.vias.forEach(via => {
+logs += `  ┌─ ${via.tipo} → Inicial: ${minutoParaHoraComRef(via.minutoInicial, ref.timestamp)} → Alvo atual: ${minutoParaHoraComRef(via.minutoAlvo, ref.timestamp)}\n`;
+
+let statusDetalhado = 'ATIVA';
+if (via.pagoExato) statusDetalhado = 'PAGO EXATO (arrasto encerrado)';
+else if (via.pagoMargem) statusDetalhado = 'PAGO MARGEM (arrasto continua)';
+logs += `  │  Status: ${statusDetalhado}\n`;
+
+if (via.arrastos.length > 0) {
+logs += `  │  Arrastos:\n`;
+via.arrastos.forEach((a, passo) => {
+let pagamentoInfo = '';
+if (a.pagamento === 'exato') pagamentoInfo = ' [BRANCO EXATO - FIM]';
+else if (a.pagamento === 'margem') pagamentoInfo = ' [BRANCO MARGEM - continua]';
+else pagamentoInfo = ' [sem branco - continua]';
+
+logs += `  │    #${passo + 1} Minuto ${a.minutoOrigem} (${minutoParaHoraComRef(a.minutoOrigem, ref.timestamp)})${pagamentoInfo}\n`;
+logs += `  │       Pedras: [${a.p1}, ${a.p2}] @ ${formatTime(a.timestampOcorrencia)}\n`;
+logs += `  │       ${a.regra}\n`;
+const alvoLogMs = Number.isFinite(Number(a.timestampAlvo))
+    ? Number(a.timestampAlvo)
+    : calcularBlocoAlvo(a.novoAlvo, getTimestampMs(a.timestampOcorrencia || ref.timestamp)).inicioMs;
+logs += `  │       Novo alvo: ${formatTime(alvoLogMs)}\n`;
+});
+}
+logs += `  ─────────────────────────\n\n`;
+});
+});
+logs += `━━━ RANKING DE CONVERGÊNCIA ━━━\n`;
+convergencias.slice(0, 5).forEach(c => {
+logs += `  ${minutoParaHoraComRef(c.minuto, c.timestampBase)}: ${c.total} confirmações\n`;
+logs += `    Fontes: ${c.fontes.slice(0, 3).join(', ')}${c.fontes.length > 3 ? '...' : ''}\n`;
+});
+}
+document.getElementById('signalLogs').innerText = logs;
+}
+
+// ========================= SIMULADOR DE BANCA =========================
+let sim={mode:'auto',active:false,bankInitial:200,bank:200,risk:2,factor:1,maxAttempts:53,baseRule:'initial',coverage:'margin',sequence:0,nextAttempt:1,signals:new Map(),bets:[],wins:0,losses:0,exact:0,margin:0};
+function brl(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function simReadConfig(){sim.bankInitial=Math.max(0,Number(document.getElementById('simBank').value)||0);sim.risk=Math.max(0,Number(document.getElementById('simRisk').value)||0);sim.factor=Math.max(1,Number(document.getElementById('simFactor').value)||1);sim.maxAttempts=Math.max(1,Math.floor(Number(document.getElementById('simMaxAttempts').value)||53));sim.baseRule=document.getElementById('simBaseRule').value;sim.coverage=document.getElementById('simCoverage').value;}
+function simStake(attempt){const base=sim.baseRule==='current'?sim.bank:sim.bankInitial;return Math.round(base*(sim.risk/100)*Math.pow(sim.factor,Math.max(0,attempt-1))*100)/100;}
+function simEntryCount(){return sim.coverage==='margin'?6:2;}
+function simTotalCost(unitStake){return Math.round(Number(unitStake||0)*simEntryCount()*100)/100;}
+function setSimMode(mode){sim.mode=mode;document.getElementById('simModeAuto').classList.toggle('active',mode==='auto');document.getElementById('simModeManual').classList.toggle('active',mode==='manual');if(mode==='auto')iniciarSimulador();else pausarSimulador();}
+function iniciarSimulador(){simReadConfig();if(sim.bankInitial<=0)return;if(sim.bank<=0&&!sim.bets.length)sim.bank=sim.bankInitial;sim.active=true;atualizarSimulador();processarSimulacao();}
+function pausarSimulador(){sim.active=false;atualizarSimulador();}
+function zerarSimulador(){simReadConfig();sim.active=false;sim.bank=sim.bankInitial;sim.sequence=0;sim.nextAttempt=1;sim.signals.clear();sim.bets=[];sim.wins=0;sim.losses=0;sim.exact=0;sim.margin=0;atualizarSimulador();}
+function simTargetBlock(minuto,timestampBase){
+if(!timestampBase)return null;
+const ref=new Date(timestampBase);
+if(!Number.isFinite(ref.getTime()))return null;
+const bruto=Number(minuto);
+if(!Number.isFinite(bruto))return null;
+
+// O simulador deve usar exatamente a mesma linha do tempo do motor.
+// O minuto bruto pode representar a hora seguinte (ex.: Ref 19:47 + alvo 00 => 20:00).
+// Primeiro calculamos a ocorrência do minuto dentro do mesmo ciclo horário da referência.
+const minutoBase=((bruto%60)+60)%60;
+const horasExtras=Math.floor(bruto/60);
+const d=new Date(ref);
+d.setSeconds(0,0);
+d.setMilliseconds(0);
+d.setHours(d.getHours()+horasExtras);
+d.setMinutes(minutoBase,0,0);
+
+// O alvo precisa ser estritamente posterior à referência.
+// Assim, 20:00 nunca volta para 19:00 e uma virada de hora é preservada.
+while(d.getTime()<=ref.getTime()){
+    d.setHours(d.getHours()+1);
+}
+
+return{start:d.getTime(),end:d.getTime()+60000,data:d};
+}
+function simEvaluateSignal(bet){
+  const b=simTargetBlock(bet.minuto,bet.timestampBase); if(!b)return'pending';
+  const now=getAgoraAnaliseMs();
+  const i=Number(bet.slotsExecuted)||0;
+  const slots=bet.coverage==='margin'?[b.start-60000,b.start-60000,b.start,b.start,b.end,b.end]:[b.start,b.start];
+  if(i>=slots.length)return'loss';
+  const slotStart=slots[i]; if(now<slotStart)return'pending';
+  const refMs=getTimestampMs(bet.refTimestamp);
+  const white=obterEventosCronologicos().find(r=>{const t=getTimestampMs(r.timestamp);return r.roll===0&&t>refMs&&t<=now&&t>=slotStart&&t<slotStart+60000;});
+  if(white){bet.slotResults.push({index:i+1,label:bet.coverage==='margin'?['MARGEM -1 #1','MARGEM -1 #2','EXATO #1','EXATO #2','MARGEM +1 #1','MARGEM +1 #2'][i]:['EXATO #1','EXATO #2'][i],time:white.timestamp,result:(i===2||i===3||bet.coverage==='exact')?'exact':'margin',eventId:white.id||null});return(i===2||i===3||bet.coverage==='exact')?'exact':'margin';}
+  bet.slotResults.push({index:i+1,label:bet.coverage==='margin'?['MARGEM -1 #1','MARGEM -1 #2','EXATO #1','EXATO #2','MARGEM +1 #1','MARGEM +1 #2'][i]:['EXATO #1','EXATO #2'][i],time:null,result:'loss'});
+  return'no_white';
+}
+function simExecutarSlots(bet){
+  if(bet.status!=='pending')return;
+  const b=simTargetBlock(bet.minuto,bet.timestampBase); if(!b)return;
+  const agora=getAgoraAnaliseMs();
+  const slots=bet.coverage==='margin'?[b.start-60000,b.start-60000,b.start,b.start,b.end,b.end]:[b.start,b.start];
+  if(bet.slotsExecuted==null)bet.slotsExecuted=0;
+  if(bet.slotResults==null)bet.slotResults=[];
+  while(bet.slotsExecuted<slots.length){
+    const i=bet.slotsExecuted, slotStart=slots[i];
+    if(agora<slotStart)break;
+    if(sim.bank < bet.stake){bet.status='loss';bet.returnGross=0;bet.profit=0;sim.losses++;return;}
+    sim.bank=Math.round((sim.bank-bet.stake)*100)/100;
+    const r=simEvaluateSignal(bet);
+    if(r==='exact'||r==='margin'){
+      bet.status=r; bet.returnGross=Math.round(bet.stake*14*100)/100; bet.profit=Math.round((bet.returnGross-bet.stake)*100)/100;
+      sim.bank=Math.round((sim.bank+bet.returnGross)*100)/100; sim.wins++; if(r==='exact')sim.exact++;else sim.margin++; sim.sequence=0;sim.nextAttempt=1;return;
+    }
+    if(bet.slotsExecuted<=i)bet.slotsExecuted=i+1;
+  }
+  if(bet.slotsExecuted>=slots.length){bet.status='loss';bet.returnGross=0;bet.profit=Math.round(-bet.totalCost*100)/100;sim.losses++;if(sim.sequence>=sim.maxAttempts){sim.sequence=0;sim.nextAttempt=1;}}
+}
+function processarSimulacao(){if(!sim.active||referencias.length===0){atualizarSimulador();return;}const conv=calcularConvergencia();conv.forEach(c=>{const bloco=simTargetBlock(c.minuto,c.timestampBase);if(!bloco)return;const key='SIG|'+bloco.start;if(sim.signals.has(key)){const betId=sim.signals.get(key);const existente=sim.bets.find(b=>b.id===betId);if(existente){existente.confirmacoes=Math.max(Number(existente.confirmacoes)||0,Number(c.total)||0);existente.fontes=Array.from(new Set([...(existente.fontes||[]),...(c.fontes||[])]));existente.minuto=c.minuto;existente.horario=bloco.data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}}else if(sim.bank>0&&sim.sequence<sim.maxAttempts){const unitStake=simStake(sim.nextAttempt);const bet={id:key,signalKey:key,minuto:c.minuto,horario:bloco.data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),timestampBase:c.timestampBase,refTimestamp:c.timestampBase,targetStart:bloco.start,confirmacoes:c.total,fontes:c.fontes.slice(),attempt:sim.nextAttempt,stake:unitStake,totalCost:Math.round(unitStake*simEntryCount()*100)/100,entryCount:simEntryCount(),coverage:sim.coverage,status:'pending',executada:false,entryAt:null,slotsExecuted:0,slotResults:[],createdAt:Date.now()};sim.signals.set(key,bet.id);sim.bets.unshift(bet);sim.sequence++;sim.nextAttempt++;}});sim.bets.forEach(b=>{if(b.status==='pending')simExecutarSlots(b);});atualizarSimulador();}
+function simFinalizeBet(bet,result){}
+function atualizarSimulador(){const badge=document.getElementById('simStatusBadge');if(badge)badge.textContent=sim.active?'● ATIVO':'⏸ PARADO';document.getElementById('simBankNow').textContent=brl(sim.bank);document.getElementById('simEntries').textContent=sim.bets.length;document.getElementById('simWins').textContent=sim.wins;document.getElementById('simLosses').textContent=sim.losses;document.getElementById('simExact').textContent=sim.exact;document.getElementById('simMargin').textContent=sim.margin;document.getElementById('simSeq').textContent=sim.sequence;document.getElementById('simProfit').textContent=brl(sim.bank-sim.bankInitial);const atual=sim.bets.find(b=>b.status==='pending'),cur=document.getElementById('simCurrent');if(atual)cur.innerHTML=`<div class="sim-card"><div><div class="label">Entrada atual</div><div class="value">#${atual.attempt}</div></div><div><div class="label">Sinal</div><div class="value">${atual.horario}</div></div><div><div class="label">Unidade</div><div class="value">${brl(atual.stake)}</div></div><div><div class="label">Custo</div><div class="value">${brl(atual.totalCost)} (${atual.entryCount}x)</div></div><div><div class="label">Confirmações</div><div class="value">${atual.confirmacoes}</div></div></div>`;else cur.innerHTML='<div class="empty-state"><div class="desc">Nenhuma entrada pendente no momento.</div></div>';const hist=document.getElementById('simHistory');if(!hist)return;hist.innerHTML=sim.bets.slice(0,30).map(b=>{const cls=b.status==='exact'||b.status==='margin'?'sim-win':b.status==='loss'?'sim-loss':'sim-pending';const txt=b.status==='exact'?'🟢 EXATO':b.status==='margin'?'🟡 MARGEM':b.status==='loss'?'🔴 PERDA':'⏳ PENDENTE';return`<div class="sim-row"><strong>#${b.attempt}</strong><span>${b.horario}</span><span>${brl(b.stake)} / ${brl(b.totalCost)}</span><span class="muted">${b.entryCount}x • ${b.confirmacoes} conf. • ${b.fontes.slice(0,2).join(', ')}</span><strong class="${cls}">${txt}</strong><span class="muted">${new Date(b.createdAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></div>`;}).join('');}
+
+function copiarEntradasSimulador(btn) {
+if (!sim.bets.length) {
+if (btn) { btn.textContent = '⚠️ SEM ENTRADAS'; setTimeout(() => btn.textContent = '📋 COPIAR ENTRADAS', 1800); }
+return;
+}
+let texto = '═══════════════════════════════════════\n  SIMULADOR DE BANCA — ENTRADAS\n═══════════════════════════════════════\n\n';
+texto += `MODO: ${sim.mode === 'auto' ? 'AUTOMÁTICO' : 'MANUAL'}\n`;
+texto += `BANCA INICIAL: ${brl(sim.bankInitial)}\n`;
+texto += `RISCO: ${sim.risk}%\n`;
+texto += `FATOR: ${sim.factor}\n`;
+texto += `COBERTURA: ${sim.coverage === 'margin' ? 'COM MARGEM (6 entradas)' : 'SEM MARGEM (2 entradas)'}\n`;
+texto += `MÁX. TENTATIVAS: ${sim.maxAttempts}\n\n`;
+sim.bets.slice().reverse().forEach((b, i) => {
+texto += `ENTRADA #${b.attempt}\n`;
+texto += `Horário do sinal: ${b.horario}\n`;
+texto += `Valor por entrada: ${brl(b.stake)}\n`;
+  texto += `Quantidade: ${b.entryCount}\n`;
+  texto += `Custo total do sinal: ${brl(b.totalCost)}\n`;
+texto += `Confirmações: ${b.confirmacoes}\n`;
+texto += `Fontes: ${(b.fontes || []).join(', ')}\n`;
+texto += `Status: ${b.status === 'exact' ? 'ACERTO EXATO' : b.status === 'margin' ? 'MARGEM' : b.status === 'loss' ? 'PERDA' : 'PENDENTE'}\n`;
+  if (b.status !== 'pending') texto += `Lucro/prejuízo: ${brl(b.profit)}\n`;
+texto += `Criada em: ${new Date(b.createdAt).toLocaleString('pt-BR')}\n`;
+texto += `ID: ${b.id}\n`;
+texto += '───────────────────────────────────────\n';
+});
+texto += `\nTOTAL DE ENTRADAS: ${sim.bets.length}\n`;
+texto += `ACERTOS: ${sim.wins} | EXATOS: ${sim.exact} | MARGENS: ${sim.margin} | PERDAS: ${sim.losses}\n`;
+texto += `BANCA ATUAL: ${brl(sim.bank)}\n`;
+const finalizar = () => { if (btn) { btn.textContent = '✅ ENTRADAS COPIADAS'; setTimeout(() => btn.textContent = '📋 COPIAR ENTRADAS', 1800); } };
+const fallback = () => { const ta=document.createElement('textarea'); ta.value=texto; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); finalizar();}catch(e){if(btn)btn.textContent='❌ ERRO AO COPIAR';} ta.remove(); };
+if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(texto).then(finalizar).catch(fallback); else fallback();
+}
+
+function copiarLogs() {
+const el = document.getElementById('signalLogs');
+const btn = document.getElementById('copyLogsBtn');
+const texto = el ? (el.innerText || el.textContent || '').trim() : '';
+if (!texto) {
+if (btn) { btn.textContent = '⚠️ SEM LOG PARA COPIAR'; setTimeout(() => btn.textContent = '📋 COPIAR LOG', 1800); }
+return;
+}
+let copiou = false;
+try {
+if (navigator.clipboard && window.isSecureContext) {
+navigator.clipboard.writeText(texto).then(() => {
+if (btn) { btn.textContent = '✅ LOG COPIADO'; setTimeout(() => btn.textContent = '📋 COPIAR LOG', 1800); }
+}).catch(() => copiarLogsFallback(texto, btn));
+return;
+}
+} catch (e) {}
+copiarLogsFallback(texto, btn);
+}
+
+function copiarLogsFallback(texto, btn) {
+const area = document.createElement('textarea');
+area.value = texto; area.setAttribute('readonly', ''); area.style.position = 'fixed'; area.style.left = '-9999px'; area.style.top = '0';
+document.body.appendChild(area); area.focus(); area.select();
+let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+area.remove();
+if (btn) { btn.textContent = ok ? '✅ LOG COPIADO' : '⚠️ NÃO FOI POSSÍVEL COPIAR'; setTimeout(() => btn.textContent = '📋 COPIAR LOG', 1800); }
+}
+
+function toggleLogs() {
+document.getElementById('signalLogs').classList.toggle('show');
+}
+
+fetchRolls();
+connectWebSocket();
+setInterval(()=>{fetchRolls();processarSimulacao();},1000);
+console.log("✅ Blaze Tracker V34+ iniciado!");
+</script>
+</body>
+</html>
